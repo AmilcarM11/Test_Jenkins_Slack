@@ -30,7 +30,7 @@ pipeline {
                         env.IMAGE_TAG = feature
                     }
                 }
-                echo "Crear y taguear imagen de Docker: ${SERVICE_NAME}:${IMAGE_TAG}"
+                echo "Crear y taguear imagen de Docker: ${SERVICE_NAME}:${env.IMAGE_TAG}"
                 echo "Subir imagen de Docker a Registry..."
             }
         }

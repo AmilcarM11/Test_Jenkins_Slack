@@ -24,8 +24,8 @@ pipeline {
             }
         }
         stage("Deploy to Feature") {
-            // when { branch pattern: "feature\/\S+", comparator: "REGEXP" }
-            when { branch pattern: "/^feature\/(\S+)$/i", comparator: "REGEXP" }
+            when { branch pattern: "feature/\\S+", comparator: "REGEXP" }
+            // when { branch pattern: "/^feature/(\S+)$/i", comparator: "REGEXP" }
             steps {
                 echo "Este Pipeline es de la Feature: ${env.BRANCH_NAME}"
             }

@@ -19,8 +19,8 @@ pipeline {
         }
         stage("Docker Image") {
             steps {
-                IMAGE_TAG = 'unknown'
                 script {
+                    IMAGE_TAG = 'unknown'
                     def matcher = (env.BRANCH_NAME =~ /feature\/(\S+)/)
                     def feature = matcher ? matcher[0][1] : "not-found"
                     echo "Feature: ${feature}"

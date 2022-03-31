@@ -20,9 +20,8 @@ pipeline {
         stage("Docker Image") {
             steps {
                 IMAGE_TAG = 'unknown'
-                def (_,feature) = (env.BRANCH_NAME =~ /feature\/(\S+))[0]
-
                 script {
+                    def (_,feature) = (env.BRANCH_NAME =~ /feature\/(\S+))[0]
                     if (feature) {
                         IMAGE_TAG = feature
                     }

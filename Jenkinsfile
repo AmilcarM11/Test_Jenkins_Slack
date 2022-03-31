@@ -1,6 +1,9 @@
 def SERVICE_NAME = "test-app"
 pipeline {
     agent any
+    environment {
+        IMAGE_TAG = 'unknown'
+    }
     stages {
         stage("Init") {
             steps {
@@ -19,11 +22,10 @@ pipeline {
         }
         stage("Docker Image") {
             steps {
-                def IMAGE_TAG = 'unknown'
                 script {
                     def feature = env.BRANCH_NAME =~ /feature\/(\S+)/
                     if (feature[0][1]) {
-                        IMAGE_TAG = feature
+                        env.IMAGE_TAG = feature
                     }
                 }
                 echo "Crear y taguear imagen de Docker: ${SERVICE_NAME}:${IMAGE_TAG}"

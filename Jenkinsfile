@@ -23,7 +23,6 @@ pipeline {
                 def (_,feature) = (env.BRANCH_NAME =~ /feature\/(\S+))[0]
 
                 script {
-                    // Es feature branch
                     if (feature) {
                         IMAGE_TAG = feature
                     }

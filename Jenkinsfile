@@ -23,14 +23,14 @@ pipeline {
                 echo "Subir imagen de Docker a Registry..."
             }
         }
-        stage("Deploy to Feature") {
+        stage("Deploy") {
             when { branch pattern: "feature/\\S+", comparator: "REGEXP" }
             // when { branch pattern: "/^feature/(\S+)$/i", comparator: "REGEXP" }
             steps {
                 echo "Este Pipeline es de la Feature: ${env.BRANCH_NAME}"
             }
         }
-        stage("Deploy to Develop") {
+        stage("Deploy") {
             when { branch 'develop' }
             steps {
                 echo "Este Pipeline es de Develop."

@@ -19,18 +19,27 @@ pipeline {
         }
         stage("Docker Image") {
             steps {
-                echo "Crear y taguear imagen de Docker: ${SERVICE_NAME}:${env.BRANCH_NAME}"
+                IMAGE_TAG = 'unknown'
+                def (_,feature) = (env.BRANCH_NAME =~ /feature\/(\S+))[0]
+
+                script {
+                    // Es feature branch
+                    if (feature) {
+                        IMAGE_TAG = feature
+                    }
+                }
+                echo "Crear y taguear imagen de Docker: ${SERVICE_NAME}:${IMAGE_TAG}"
                 echo "Subir imagen de Docker a Registry..."
             }
         }
-        stage("Deploy") {
+        stage("Deploy Feature") {
             when { branch pattern: "feature/\\S+", comparator: "REGEXP" }
             // when { branch pattern: "/^feature/(\S+)$/i", comparator: "REGEXP" }
             steps {
                 echo "Este Pipeline es de la Feature: ${env.BRANCH_NAME}"
             }
         }
-        stage("Deploy") {
+        stage("Deploy QA") {
             when { branch 'develop' }
             steps {
                 echo "Este Pipeline es de Develop."

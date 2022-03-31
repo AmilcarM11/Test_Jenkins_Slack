@@ -25,10 +25,11 @@ pipeline {
                 script {
                     def matcher = (env.BRANCH_NAME =~ /feature\/(\S+)/)
                     def feature = matcher ? matcher[0][1] : "not-found"
-                    print feature
+                    echo "Feature: ${feature}"
                     if (feature) {
                         env.IMAGE_TAG = feature
                     }
+                    echo "Valor interno es : ${env.IMAGE_TAG}"
                 }
                 echo "Crear y taguear imagen de Docker: ${SERVICE_NAME}:${env.IMAGE_TAG}"
                 echo "Subir imagen de Docker a Registry..."

@@ -23,12 +23,11 @@ pipeline {
         stage("Docker Image") {
             steps {
                 script {
-                    def feature = env.BRANCH_NAME =~ /feature\/(\S+)/
+                    def feature = env.BRANCH_NAME =~ /^feature\/(\S+)$/i
+                    sh "echo ${feature[0][1]}"
                     if (feature[0][1]) {
                         env.IMAGE_TAG = feature
                     }
-                    sh "echo ${feature[0]}"
-                    sh "echo ${feature}"
                 }
                 echo "Crear y taguear imagen de Docker: ${SERVICE_NAME}:${IMAGE_TAG}"
                 echo "Subir imagen de Docker a Registry..."

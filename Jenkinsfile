@@ -21,8 +21,8 @@ pipeline {
             steps {
                 IMAGE_TAG = 'unknown'
                 script {
-                    def (_,feature) = (env.BRANCH_NAME =~ /feature\/(\S+))[0]
-                    if (feature) {
+                    def feature = env.BRANCH_NAME =~ /feature\/(\S+)/
+                    if (feature[0][1]) {
                         IMAGE_TAG = feature
                     }
                 }

@@ -25,7 +25,7 @@ pipeline {
                 script {
                     def matcher = (env.BRANCH_NAME =~ /feature\/(\S+)/)
                     def feature = matcher ? matcher[0][1] : "not-found"
-                    sh "echo ${feature}"
+                    print feature
                     if (feature) {
                         env.IMAGE_TAG = feature
                     }

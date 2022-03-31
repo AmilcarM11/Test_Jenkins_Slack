@@ -23,7 +23,7 @@ pipeline {
         stage("Docker Image") {
             steps {
                 script {
-                    def feature = env.BRANCH_NAME =~ /^feature\/(\S+)$/i
+                    def feature = env.BRANCH_NAME =~ /feature\/(\S+)/
                     sh "echo ${feature[0][1]}"
                     if (feature[0][1]) {
                         env.IMAGE_TAG = feature

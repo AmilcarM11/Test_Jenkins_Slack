@@ -17,21 +17,22 @@ pipeline {
                 script {
                     IMAGE_TAG = 'unknown'
                     SHORT_COMMIT_HASH = "${env.GIT_COMMIT[0..7]}"
-                    // Ramas de features
-                    def matcher = (env.BRANCH_NAME =~ /feature\/(\S+)/)
-                    def feature = matcher ? matcher[0][1] : null
-                    if (feature != null) {
-                        IMAGE_TAG = feature
-                    }
-                    // Ramas de release
-                    matcher = (env.BRANCH_NAME =~ /release\/(\S+)/)
-                    def release = matcher ? matcher[0][1] : null
-                    if (release != null) {
-                        IMAGE_TAG = release
-                    }
+                    
                     // Rama develop
                     if(env.BRANCH_NAME == 'develop') {
                         IMAGE_TAG = "develop-${SHORT_COMMIT_HASH}"
+                    }
+                    // Rama main
+                    else if(env.BRANCH_NAME == 'main') {
+                        // TODO: IMAGE_TAG según TAG_NAME
+                        // IMAGE_TAG = "main-${SHORT_COMMIT_HASH}"
+                    } else {
+                        // Ramas de feature, release, hotfix, bugfix, support
+                        def matcher = (env.BRANCH_NAME =~ /(?:feature|release|hotfix|bugfix|support)\/(\S+)/)
+                        def branch_suffix = matcher ? matcher[0][1] : null
+                        if (branch_suffix != null) {
+                            IMAGE_TAG = branch_suffix
+                        }
                     }
                     
                     IMAGE_NAME_AND_TAG = "${SERVICE_NAME}:${IMAGE_TAG}"
@@ -39,7 +40,7 @@ pipeline {
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
-                slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}> for branch *${env.BRANCH_NAME}* \nDocker Image: \t${IMAGE_FULL_NAME}\n\n${env.GIT_COMMIT_MSG}"
+                slackSend message: "Pipeline started: *<${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}>* for branch *${env.BRANCH_NAME}* \nDocker Image: \t${IMAGE_FULL_NAME}\n\n${env.GIT_COMMIT_MSG}"
             }
         }
         stage("Compile") {
@@ -62,6 +63,21 @@ pipeline {
             //         slackSend color: "#0db7ed", message: "Docker Image published: ${IMAGE_FULL_NAME}"
             //     }
             // }
+        }
+        stage("Special Branch") {
+            when { 
+                anyOf { 
+                    branch 'main'; 
+                    branch pattern: "feature/*";
+                    branch pattern: "hotfix/*";
+                    branch pattern: "bugfix/*";
+                    branch pattern: "release/*";
+                    branch pattern: "support/*";
+                } 
+            }
+            steps {
+                echo "special branch detected"
+            }
         }
         stage("Deploy QA") {
             when { branch 'develop' }

@@ -8,6 +8,9 @@ pipeline {
     stages {
         stage("Init") {
             steps {
+                // TODO: Remove after debug
+                echo "Tag: ${env.TAG_NAME}"
+
                 // Obtener el commit message.
                 script {
                     env.GIT_COMMIT_MSG = sh (script: "git log -1 --pretty=%B ${env.GIT_COMMIT}", returnStdout: true).trim()
@@ -79,9 +82,9 @@ pipeline {
             }
         }
         stage("Tag on Feature") {
-            when { allOf { branch "feature/*";  tag "*" }  }
+            when { tag "test-*" }
             steps {
-                echo "Detected tag ${TAG_NAME}"
+                echo "Detected tag ${env.TAG_NAME}"
             }
         }
         stage("Deploy QA") {

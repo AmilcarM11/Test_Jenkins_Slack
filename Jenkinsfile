@@ -69,7 +69,7 @@ pipeline {
                     branch pattern: "bugfix/*";
                     branch pattern: "release/*";
                     branch pattern: "support/*";
-                    tag pattern: "[\w][\w.-]{0,127}", comparator: "REGEXP" // Todas las tags de git, que cumplan las convenciones de nombre para Docker Image tag.
+                    tag pattern: "[\\w][\\w.-]{0,127}", comparator: "REGEXP" // Todas las tags de git, que cumplan las convenciones de nombre para Docker Image tag.
                 } 
             }
             steps {

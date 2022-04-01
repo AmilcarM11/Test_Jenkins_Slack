@@ -3,7 +3,7 @@ pipeline {
     agent any
     environment {
         QA_URL = 'http://localhost:3020' 
-        DOCKER_REGISTRY = 'http://registry.example.com' 
+        DOCKER_REGISTRY = 'registry.example.com' 
     }
     stages {
         stage("Init") {

@@ -37,8 +37,7 @@ pipeline {
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
-                // TODO: URL de la branch o del cambio. 
-                slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME}> for branch <${env.GIT_URL}|${env.BRANCH_NAME} #${env.BUILD_NUMBER}>\nDocker Image: \t${IMAGE_NAME_AND_TAG}\n\n${env.GIT_COMMIT_MSG}"
+                slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER> for branch *${env.BRANCH_NAME}* \nDocker Image: \t ${IMAGE_NAME_AND_TAG}\n\n _${env.GIT_COMMIT_MSG}_"
             }
         }
         stage("Compile") {
@@ -53,14 +52,14 @@ pipeline {
         }
         stage("Docker Image") {
             steps {
-                echo "Crear y taguear imagen de Docker: ${SERVICE_NAME}:${IMAGE_TAG}"
+                echo "Crear y taguear imagen de Docker: ${IMAGE_NAME_AND_TAG}"
                 echo "Subir imagen de Docker a Registry..."
             }
-            post {
-                success {
-                    slackSend color: "#0db7ed", message: "Docker Image published: ${IMAGE_NAME_AND_TAG}"
-                }
-            }
+            // post {
+            //     success {
+            //         slackSend color: "#0db7ed", message: "Docker Image published: ${IMAGE_NAME_AND_TAG}"
+            //     }
+            // }
         }
         stage("Deploy QA") {
             when { branch 'develop' }

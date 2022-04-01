@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage("Init") {
             steps {
-                slackSend message: "Pipeline started: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> for branch <${env.GIT_URL}|${env.BRANCH_NAME}>"
+                slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}> for branch <${env.GIT_URL}|${env.BRANCH_NAME}>"
             }
         }
         stage("Compile") {
@@ -36,7 +36,7 @@ pipeline {
             }
             post {
                 success {
-                    slackSend color: "good", message: "Se creó la imagen: ${IMAGE_NAME_AND_TAG}"
+                    slackSend color: "#0db7ed", message: "Docker Image published: ${IMAGE_NAME_AND_TAG}"
                 }
             }
         }

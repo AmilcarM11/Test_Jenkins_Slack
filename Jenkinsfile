@@ -8,9 +8,6 @@ pipeline {
     stages {
         stage("Init") {
             steps {
-                // TODO: Remove after debug
-                echo "Tag: ${env.TAG_NAME}"
-
                 // Obtener el commit message.
                 script {
                     env.GIT_COMMIT_MSG = sh (script: "git log -1 --pretty=%B ${env.GIT_COMMIT}", returnStdout: true).trim()
@@ -19,16 +16,20 @@ pipeline {
                 // Determinar tag de la imagen de Docker
                 script {
                     IMAGE_TAG = 'unknown'
-                    TRIGGER_SOURCE = env.TAG_NAME ? "tag ${env.TAG_NAME}" : "branch ${env.BRANCH_NAME}"
+                    TRIGGER_SOURCE = env.TAG_NAME ? "tag *${env.TAG_NAME}*" : "branch *${env.BRANCH_NAME}*"
                     SHORT_COMMIT_HASH = "${env.GIT_COMMIT[0..7]}"
 
-                    // Git Tags
+                    // Git tags
                     if(env.TAG_NAME != null) {
                         IMAGE_TAG = "${env.TAG_NAME}"
                     }
                     // Rama develop
                     else if(env.BRANCH_NAME == 'develop') {
                         IMAGE_TAG = "develop-${SHORT_COMMIT_HASH}"
+                    }
+                    // Rama main
+                    else if(env.BRANCH_NAME == 'main') {
+                        IMAGE_TAG = "main-${SHORT_COMMIT_HASH}"
                     } else {
                         // Ramas de feature, release, hotfix, bugfix, support
                         def matcher = (env.BRANCH_NAME =~ /(?:feature|release|hotfix|bugfix|support)\/(\S+)/)
@@ -43,7 +44,7 @@ pipeline {
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
-                slackSend message: "Pipeline started: *<${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}>* for *${TRIGGER_SOURCE}* \nDocker Image: \t${IMAGE_FULL_NAME}\n\n${env.GIT_COMMIT_MSG}"
+                slackSend message: "Pipeline started: *<${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}>* for ${TRIGGER_SOURCE} \nDocker Image: \t${IMAGE_FULL_NAME}\n\n${env.GIT_COMMIT_MSG}"
             }
         }
         stage("Compile") {
@@ -57,6 +58,20 @@ pipeline {
             }
         }
         stage("Docker Image") {
+            // Solo se construyen imagenes de Docker para las ramas de git-flow (main, develop, feature, release, hotfix, bugfix, release, support)
+            // Y para todas las Git Tags.
+            when { 
+                anyOf { 
+                    branch pattern: "main";
+                    branch pattern: "develop";
+                    branch pattern: "feature/*";
+                    branch pattern: "hotfix/*";
+                    branch pattern: "bugfix/*";
+                    branch pattern: "release/*";
+                    branch pattern: "support/*";
+                    tag "" // Todas las tags de git.
+                } 
+            }
             steps {
                 echo "Crear y taguear imagen de Docker: ${IMAGE_FULL_NAME}"
                 echo "Subir imagen de Docker a Registry..."
@@ -66,26 +81,6 @@ pipeline {
             //         slackSend color: "#0db7ed", message: "Docker Image published: ${IMAGE_FULL_NAME}"
             //     }
             // }
-        }
-        stage("Special Branch") {
-            when { 
-                anyOf { 
-                    branch pattern: "feature/*";
-                    branch pattern: "hotfix/*";
-                    branch pattern: "bugfix/*";
-                    branch pattern: "release/*";
-                    branch pattern: "support/*";
-                } 
-            }
-            steps {
-                echo "special branch detected"
-            }
-        }
-        stage("Tag on Feature") {
-            when { tag "test-*" }
-            steps {
-                echo "Detected tag ${env.TAG_NAME}"
-            }
         }
         stage("Deploy QA") {
             when { branch 'develop' }

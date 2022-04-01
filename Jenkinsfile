@@ -36,7 +36,7 @@ pipeline {
             }
             post {
                 success {
-                    slackSend color: "good" message: "Se creó la imagen: ${IMAGE_NAME_AND_TAG}"
+                    slackSend color: "good", message: "Se creó la imagen: ${IMAGE_NAME_AND_TAG}"
                 }
             }
         }

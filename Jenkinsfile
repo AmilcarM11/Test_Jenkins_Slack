@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage("Init") {
             steps {
-                echo "Pipeline started: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> for branch <${env.GIT_URL}|${env.BRANCH_NAME}>"
+                slackSend message: "Pipeline started: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> for branch <${env.GIT_URL}|${env.BRANCH_NAME}>"
             }
         }
         stage("Compile") {
@@ -28,9 +28,16 @@ pipeline {
                         IMAGE_TAG = feature
                     }
                     echo "Valor interno es : ${IMAGE_TAG}"
+
+                    IMAGE_NAME_AND_TAG = "${SERVICE_NAME}:${IMAGE_TAG}"
                 }
                 echo "Crear y taguear imagen de Docker: ${SERVICE_NAME}:${IMAGE_TAG}"
                 echo "Subir imagen de Docker a Registry..."
+            }
+            post {
+                success {
+                    slackSend color: "good" message: "Se creó la imagen: ${IMAGE_NAME_AND_TAG}"
+                }
             }
         }
         // stage("Deploy Feature") {

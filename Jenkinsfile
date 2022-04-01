@@ -4,13 +4,16 @@ pipeline {
     stages {
         stage("Init") {
             steps {
+                // Notificar inicio de Pipeline
+                // TODO: URL de la branch o del cambio.
                 slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}> for branch <${env.GIT_URL}|${env.BRANCH_NAME}>", sendAsText: true
-                echo env.GIT_COMMIT
+                
+                // Obtener el commit message.
                 script {
                     env.GIT_COMMIT_MSG = sh (script: "git log -1 --pretty=%B ${env.GIT_COMMIT}", returnStdout: true).trim()
                 }
-                // slackSend message: "${env.GIT_COMMIT_MSG}"
-                echo env.GIT_COMMIT_MSG
+                // Notificar el commit message.
+                slackSend message: "${env.GIT_COMMIT_MSG}"
             }
         }
         stage("Compile") {

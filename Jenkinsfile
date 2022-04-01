@@ -67,7 +67,6 @@ pipeline {
         stage("Special Branch") {
             when { 
                 anyOf { 
-                    branch 'main'; 
                     branch pattern: "feature/*";
                     branch pattern: "hotfix/*";
                     branch pattern: "bugfix/*";
@@ -77,6 +76,12 @@ pipeline {
             }
             steps {
                 echo "special branch detected"
+            }
+        }
+        stage("Tag on Feature") {
+            when { allOf { branch "feature/*";  tag }  }
+            steps {
+                echo "Detected tag ${TAG_NAME}"
             }
         }
         stage("Deploy QA") {

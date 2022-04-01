@@ -32,7 +32,7 @@ pipeline {
                 script {
                     IMAGE_TAG = 'unknown'
                     def matcher = (env.BRANCH_NAME =~ /feature\/(\S+)/)
-                    def feature = matcher ? matcher[0][1] : "not-found"
+                    def feature = matcher ? matcher[0][1] : null
                     echo "Feature: ${feature}"
                     if (feature != null) {
 
@@ -64,7 +64,7 @@ pipeline {
             steps {
                 echo "Este Pipeline es de Develop."
 
-                slackSend message: "Branch **${env.BRANCH_NAME}** deployed to <${env.QA_URL}|QA env> \nImage: ${IMAGE_NAME_AND_TAG}"
+                slackSend message: "Branch ${env.BRANCH_NAME} deployed to <${env.QA_URL}|QA env> \nDocker Image:\t ${IMAGE_NAME_AND_TAG}"
             }
         }
     }

@@ -5,6 +5,8 @@ pipeline {
         QA_URL = 'http://localhost:3020' 
         DOCKER_REGISTRY = 'registry.example.com' 
     }
+    // Buscar cambios en el Repositorio de Git cada 5 mins.
+    triggers { pollSCM('H/5 * * * *') }
     stages {
         stage("Init") {
             steps {

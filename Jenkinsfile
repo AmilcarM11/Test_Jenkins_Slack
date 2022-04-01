@@ -7,7 +7,7 @@ pipeline {
                 slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}> for branch <${env.GIT_URL}|${env.BRANCH_NAME}>", sendAsText: true
                 echo env.GIT_COMMIT
                 script {
-                    env.GIT_COMMIT_MSG = sh (script: 'git log -1 --pretty=%B ${env.GIT_COMMIT}', returnStdout: true).trim()
+                    env.GIT_COMMIT_MSG = sh (script: "git log -1 --pretty=%B ${env.GIT_COMMIT}", returnStdout: true).trim()
                 }
                 // slackSend message: "${env.GIT_COMMIT_MSG}"
                 echo env.GIT_COMMIT_MSG

@@ -5,6 +5,8 @@ pipeline {
         QA_URL = 'http://localhost:3020' 
         DOCKER_REGISTRY = 'registry.example.com' 
     }
+    // Buscar cambios en el Repositorio de Git cada 5 mins.
+    triggers { pollSCM('H/5 * * * *') }
     stages {
         stage("Init") {
             steps {
@@ -16,16 +18,20 @@ pipeline {
                 // Determinar tag de la imagen de Docker
                 script {
                     IMAGE_TAG = 'unknown'
+                    TRIGGER_SOURCE = env.TAG_NAME ? "tag *${env.TAG_NAME}*" : "branch *${env.BRANCH_NAME}*"
                     SHORT_COMMIT_HASH = "${env.GIT_COMMIT[0..7]}"
-                    
+
+                    // Git tags
+                    if(env.TAG_NAME != null) {
+                        IMAGE_TAG = "${env.TAG_NAME}"
+                    }
                     // Rama develop
-                    if(env.BRANCH_NAME == 'develop') {
+                    else if(env.BRANCH_NAME == 'develop') {
                         IMAGE_TAG = "develop-${SHORT_COMMIT_HASH}"
                     }
                     // Rama main
                     else if(env.BRANCH_NAME == 'main') {
-                        // TODO: IMAGE_TAG según TAG_NAME
-                        // IMAGE_TAG = "main-${SHORT_COMMIT_HASH}"
+                        IMAGE_TAG = "main-${SHORT_COMMIT_HASH}"
                     } else {
                         // Ramas de feature, release, hotfix, bugfix, support
                         def matcher = (env.BRANCH_NAME =~ /(?:feature|release|hotfix|bugfix|support)\/(\S+)/)
@@ -40,7 +46,7 @@ pipeline {
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
-                slackSend message: "Pipeline started: *<${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}>* for branch *${env.BRANCH_NAME}* \nDocker Image: \t${IMAGE_FULL_NAME}\n\n${env.GIT_COMMIT_MSG}"
+                slackSend message: "Pipeline started: *<${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}>* for ${TRIGGER_SOURCE} \n\n${env.GIT_COMMIT_MSG}"
             }
         }
         stage("Compile") {
@@ -54,29 +60,29 @@ pipeline {
             }
         }
         stage("Docker Image") {
-            steps {
-                echo "Crear y taguear imagen de Docker: ${IMAGE_FULL_NAME}"
-                echo "Subir imagen de Docker a Registry..."
-            }
-            // post {
-            //     success {
-            //         slackSend color: "#0db7ed", message: "Docker Image published: ${IMAGE_FULL_NAME}"
-            //     }
-            // }
-        }
-        stage("Special Branch") {
+            // Solo se construyen imagenes de Docker para las ramas de git-flow (main, develop, feature, release, hotfix, bugfix, release, support)
+            // Y para todas las Git Tags.
             when { 
                 anyOf { 
-                    branch 'main'; 
+                    branch pattern: "main";
+                    branch pattern: "develop";
                     branch pattern: "feature/*";
                     branch pattern: "hotfix/*";
                     branch pattern: "bugfix/*";
                     branch pattern: "release/*";
                     branch pattern: "support/*";
+                    tag pattern: "[\\w][\\w.-]{0,127}", comparator: "REGEXP" // Todas las tags de git, que cumplan las convenciones de nombre para Docker Image tag.
                 } 
             }
             steps {
-                echo "special branch detected"
+                echo "Crear y taguear imagen de Docker: ${IMAGE_FULL_NAME}"
+                echo "Subir imagen de Docker a Registry..."
+            }
+            post {
+                success {
+                    // #0db7ed = Color insignia de Docker
+                    slackSend color: "#0db7ed", message: "Docker Image published:\t${IMAGE_FULL_NAME}"
+                }
             }
         }
         stage("Deploy QA") {

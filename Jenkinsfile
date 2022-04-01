@@ -37,7 +37,7 @@ pipeline {
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
-                slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER> for branch *${env.BRANCH_NAME}* \nDocker Image: \t ${IMAGE_NAME_AND_TAG}\n\n _${env.GIT_COMMIT_MSG}_"
+                slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}> for branch *${env.BRANCH_NAME}* \nDocker Image: \t ${IMAGE_NAME_AND_TAG}\n\n _${env.GIT_COMMIT_MSG}_"
             }
         }
         stage("Compile") {

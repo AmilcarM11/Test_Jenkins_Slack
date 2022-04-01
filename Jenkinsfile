@@ -10,7 +10,7 @@ pipeline {
                 }
 
                 // Notificar inicio de Pipeline, la rama, y el commit message
-                // TODO: URL de la branch o del cambio.
+                // TODO: URL de la branch o del cambio. 
                 slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}> for branch <${env.GIT_URL}|${env.BRANCH_NAME}> \nCommit message:\n${env.GIT_COMMIT_MSG}"
             }
         }

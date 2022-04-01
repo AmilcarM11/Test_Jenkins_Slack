@@ -3,6 +3,7 @@ pipeline {
     agent any
     environment {
         QA_URL = 'http://localhost:3020' 
+        DOCKER_REGISTRY = 'http://registry.example.com' 
     }
     stages {
         stage("Init") {
@@ -34,10 +35,11 @@ pipeline {
                     }
                     
                     IMAGE_NAME_AND_TAG = "${SERVICE_NAME}:${IMAGE_TAG}"
+                    IMAGE_FULL_NAME = "${DOCKER_REGISTRY}/${IMAGE_NAME_AND_TAG}"
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
-                slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}> for branch *${env.BRANCH_NAME}* \nDocker Image: \t ${IMAGE_NAME_AND_TAG}\n\n _${env.GIT_COMMIT_MSG}_"
+                slackSend message: "Pipeline started: <${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}> for branch *${env.BRANCH_NAME}* \nDocker Image: \t_${IMAGE_FULL_NAME}_\n\n${env.GIT_COMMIT_MSG}"
             }
         }
         stage("Compile") {
@@ -52,12 +54,12 @@ pipeline {
         }
         stage("Docker Image") {
             steps {
-                echo "Crear y taguear imagen de Docker: ${IMAGE_NAME_AND_TAG}"
+                echo "Crear y taguear imagen de Docker: ${IMAGE_FULL_NAME}"
                 echo "Subir imagen de Docker a Registry..."
             }
             // post {
             //     success {
-            //         slackSend color: "#0db7ed", message: "Docker Image published: ${IMAGE_NAME_AND_TAG}"
+            //         slackSend color: "#0db7ed", message: "Docker Image published: ${IMAGE_FULL_NAME}"
             //     }
             // }
         }
@@ -66,7 +68,7 @@ pipeline {
             steps {
                 echo "Este Pipeline es de Develop."
 
-                slackSend message: "Branch ${env.BRANCH_NAME} deployed to <${env.QA_URL}|QA env> \nDocker Image:\t ${IMAGE_NAME_AND_TAG}"
+                slackSend message: "Branch ${env.BRANCH_NAME} deployed to <${env.QA_URL}|QA env> \nDocker Image:\t ${IMAGE_FULL_NAME}"
             }
         }
     }

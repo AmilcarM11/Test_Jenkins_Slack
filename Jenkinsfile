@@ -19,16 +19,16 @@ pipeline {
                 // Determinar tag de la imagen de Docker
                 script {
                     IMAGE_TAG = 'unknown'
+                    TRIGGER_SOURCE = env.TAG_NAME ? "tag ${env.TAG_NAME}" : "branch ${env.BRANCH_NAME}"
                     SHORT_COMMIT_HASH = "${env.GIT_COMMIT[0..7]}"
-                    
-                    // Rama develop
-                    if(env.BRANCH_NAME == 'develop') {
-                        IMAGE_TAG = "develop-${SHORT_COMMIT_HASH}"
+
+                    // Git Tags
+                    if(env.TAG_NAME != null) {
+                        IMAGE_TAG = "${env.TAG_NAME}"
                     }
-                    // Rama main
-                    else if(env.BRANCH_NAME == 'main') {
-                        // TODO: IMAGE_TAG según TAG_NAME
-                        // IMAGE_TAG = "main-${SHORT_COMMIT_HASH}"
+                    // Rama develop
+                    else if(env.BRANCH_NAME == 'develop') {
+                        IMAGE_TAG = "develop-${SHORT_COMMIT_HASH}"
                     } else {
                         // Ramas de feature, release, hotfix, bugfix, support
                         def matcher = (env.BRANCH_NAME =~ /(?:feature|release|hotfix|bugfix|support)\/(\S+)/)
@@ -43,7 +43,7 @@ pipeline {
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
-                slackSend message: "Pipeline started: *<${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}>* for branch *${env.BRANCH_NAME}* \nDocker Image: \t${IMAGE_FULL_NAME}\n\n${env.GIT_COMMIT_MSG}"
+                slackSend message: "Pipeline started: *<${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}>* for *${TRIGGER_SOURCE}* \nDocker Image: \t${IMAGE_FULL_NAME}\n\n${env.GIT_COMMIT_MSG}"
             }
         }
         stage("Compile") {

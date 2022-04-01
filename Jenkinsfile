@@ -79,7 +79,7 @@ pipeline {
             }
         }
         stage("Tag on Feature") {
-            when { allOf { branch "feature/*";  tag }  }
+            when { allOf { branch "feature/*";  tag "" }  }
             steps {
                 echo "Detected tag ${TAG_NAME}"
             }

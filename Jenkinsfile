@@ -1,6 +1,9 @@
 def SERVICE_NAME = "test-app"
 pipeline {
     agent any
+    environment {
+        QA_URL = 'http://localhost:3020' 
+    }
     stages {
         stage("Init") {
             steps {
@@ -32,6 +35,8 @@ pipeline {
                     def feature = matcher ? matcher[0][1] : "not-found"
                     echo "Feature: ${feature}"
                     if (feature != null) {
+
+
                         IMAGE_TAG = feature
                     }
                     echo "Valor interno es : ${IMAGE_TAG}"
@@ -58,6 +63,8 @@ pipeline {
             when { branch 'develop' }
             steps {
                 echo "Este Pipeline es de Develop."
+
+                slackSend message: "Branch **${env.BRANCH_NAME}** deployed to <${env.QA_URL}|QA env> \nImage: ${IMAGE_NAME_AND_TAG}"
             }
         }
     }

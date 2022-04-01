@@ -44,7 +44,7 @@ pipeline {
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
-                slackSend message: "Pipeline started: *<${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}>* for ${TRIGGER_SOURCE} \nDocker Image: \t${IMAGE_FULL_NAME}\n\n${env.GIT_COMMIT_MSG}"
+                slackSend message: "Pipeline started: *<${env.BUILD_URL}|${SERVICE_NAME} #${env.BUILD_NUMBER}>* for ${TRIGGER_SOURCE} \n\n${env.GIT_COMMIT_MSG}"
             }
         }
         stage("Compile") {
@@ -69,18 +69,19 @@ pipeline {
                     branch pattern: "bugfix/*";
                     branch pattern: "release/*";
                     branch pattern: "support/*";
-                    tag "" // Todas las tags de git.
+                    tag pattern: "[\w][\w.-]{0,127}", comparator: "REGEXP" // Todas las tags de git, que cumplan las convenciones de nombre para Docker Image tag.
                 } 
             }
             steps {
                 echo "Crear y taguear imagen de Docker: ${IMAGE_FULL_NAME}"
                 echo "Subir imagen de Docker a Registry..."
             }
-            // post {
-            //     success {
-            //         slackSend color: "#0db7ed", message: "Docker Image published: ${IMAGE_FULL_NAME}"
-            //     }
-            // }
+            post {
+                success {
+                    // #0db7ed = Color insignia de Docker
+                    slackSend color: "#0db7ed", message: "Docker Image published:\t${IMAGE_FULL_NAME}"
+                }
+            }
         }
         stage("Deploy QA") {
             when { branch 'develop' }

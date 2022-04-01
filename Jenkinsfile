@@ -66,9 +66,7 @@ pipeline {
         stage("Deploy QA") {
             when { branch 'develop' }
             steps {
-                echo "Este Pipeline es de Develop."
-
-                slackSend message: "Branch ${env.BRANCH_NAME} deployed to <${env.QA_URL}|QA env> \nDocker Image:\t ${IMAGE_FULL_NAME}"
+                slackSend message: "Branch ${env.BRANCH_NAME} deployed to <${env.QA_URL}|QA env>"
             }
         }
     }

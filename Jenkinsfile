@@ -15,7 +15,7 @@ pipeline {
                 // Determinar tag de la imagen de Docker
                 script {
                     IMAGE_TAG = 'unknown'
-                    SHORT_COMMIT_HASH = "${env.GIT_COMMIT,length=8}"
+                    SHORT_COMMIT_HASH = "${env.GIT_COMMIT[0..7]}"
                     // Ramas de features
                     def matcher = (env.BRANCH_NAME =~ /feature\/(\S+)/)
                     def feature = matcher ? matcher[0][1] : null

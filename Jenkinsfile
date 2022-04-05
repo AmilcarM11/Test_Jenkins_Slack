@@ -89,6 +89,30 @@ pipeline {
             when { branch 'develop' }
             steps {
                 slackSend message: "Branch ${env.BRANCH_NAME} deployed to <${env.QA_URL}|QA env>"
+                // TODO: Desplegar a QA
+            }
+        }
+        stage("Deploy Prod") {
+            when { branch 'feature/test-manual-step' }
+            options {
+                timeout(time: 3, unit: "MINUTES")
+            }
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'webhook_secret', variable: 'SECRET')]) { 
+                        // Registrar el Webhook
+                        hook = registerWebhook(authToken: SECRET)
+                        echo "Waiting for POST to ${hook.url}\n"
+
+                        // Notificar Slack
+                        slackSend message: "To deploy, run: \n```curl -X POST -d 'OK' -H \"Authorization: ${SECRET}\" ${hook.url}```"
+                        
+                        // Obtener respuesta
+                        data = waitForWebhook hook
+                        echo "Webhook called with data: ${data}"
+                    }
+                }
+                // TODO: Desplegar a Producción
             }
         }
     }

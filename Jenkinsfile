@@ -68,6 +68,8 @@ pipeline {
             // y para las tags de git, siempre que cumplan las convenciones de nombre para Docker Image tag.
             when { 
                 anyOf { 
+                    branch "main";
+                    branch "develop";
                     branch pattern: "(feature|release|hotfix|bugfix|support)/(\\S+)", comparator: "REGEXP";
                     tag pattern: "[\\w][\\w.-]{0,127}", comparator: "REGEXP";
                 } 

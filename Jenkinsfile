@@ -9,8 +9,10 @@ pipeline {
     triggers { pollSCM('H/5 * * * *') }
     stages {
         stage('Test kubectl') {
-            withKubeConfig([credentialsId: 'k8sConfig', serverUrl: "https://192.168.0.10:6443"]) {
-                sh 'kubectl get all'
+            steps {
+                withKubeConfig([credentialsId: 'kube-config', serverUrl: "https://192.168.0.10:6443"]) {
+                    sh 'kubectl get all'
+                }
             }
         }
     }

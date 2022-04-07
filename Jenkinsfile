@@ -3,7 +3,7 @@ pipeline {
     agent any
     environment {
         QA_URL = 'http://localhost:3020' 
-        DOCKER_REGISTRY = 'registry.example.com' 
+        DOCKER_REGISTRY = 'harbor.tallerdevops.com/tfm-grupo5' 
     }
     // Buscar cambios en el Repositorio de Git cada 5 mins.
     triggers { pollSCM('H/5 * * * *') }
@@ -18,6 +18,7 @@ pipeline {
                 // Determinar tag de la imagen de Docker
                 script {
                     IMAGE_TAG = 'unknown'
+                    IMAGE_TAG_ALT = null
                     TRIGGER_SOURCE = env.TAG_NAME ? "tag *${env.TAG_NAME}*" : "branch *${env.BRANCH_NAME}*"
                     SHORT_COMMIT_HASH = "${env.GIT_COMMIT[0..7]}"
 
@@ -28,21 +29,24 @@ pipeline {
                     // Rama develop
                     else if(env.BRANCH_NAME == 'develop') {
                         IMAGE_TAG = "develop-${SHORT_COMMIT_HASH}"
+                        IMAGE_TAG_ALT = "develop"
                     }
                     // Rama main
                     else if(env.BRANCH_NAME == 'main') {
                         IMAGE_TAG = "main-${SHORT_COMMIT_HASH}"
+                        IMAGE_TAG_ALT = 'latest'
                     } else {
                         // Ramas de feature, release, hotfix, bugfix, support
-                        def matcher = (env.BRANCH_NAME =~ /(?:feature|release|hotfix|bugfix|support)\/(\S+)/)
-                        def branch_suffix = matcher ? matcher[0][1] : null
+                        def matcher = (env.BRANCH_NAME =~ /(feature|release|hotfix|bugfix|support)\/(\S+)/)
+                        def branch_suffix = matcher ? matcher[0] : null
                         if (branch_suffix != null) {
-                            IMAGE_TAG = branch_suffix
+                            def branch_type = branch_suffix[1] == 'release' ? 'pre' : branch_suffix[1]
+                            IMAGE_TAG = branch_type + "-" + branch_suffix[2]
                         }
                     }
                     
-                    IMAGE_NAME_AND_TAG = "${SERVICE_NAME}:${IMAGE_TAG}"
-                    IMAGE_FULL_NAME = "${DOCKER_REGISTRY}/${IMAGE_NAME_AND_TAG}"
+                    // Definir el nombre completo de la imagen de Docker.
+                    IMAGE_FULL_NAME = "${DOCKER_REGISTRY}/${SERVICE_NAME}:${IMAGE_TAG}"
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
@@ -60,28 +64,37 @@ pipeline {
             }
         }
         stage("Docker Image") {
-            // Solo se construyen imagenes de Docker para las ramas de git-flow (main, develop, feature, release, hotfix, bugfix, release, support)
-            // Y para todas las Git Tags.
+            // Se construye imagen de Docker para las ramas de git-flow (main, develop, feature, release, hotfix, bugfix, release, support)
+            // y para las tags de git, siempre que cumplan las convenciones de nombre para Docker Image tag.
             when { 
                 anyOf { 
-                    branch pattern: "main";
-                    branch pattern: "develop";
-                    branch pattern: "feature/*";
-                    branch pattern: "hotfix/*";
-                    branch pattern: "bugfix/*";
-                    branch pattern: "release/*";
-                    branch pattern: "support/*";
-                    tag pattern: "[\\w][\\w.-]{0,127}", comparator: "REGEXP" // Todas las tags de git, que cumplan las convenciones de nombre para Docker Image tag.
+                    branch pattern: "(feature|release|hotfix|bugfix|support)/(\\S+)", comparator: "REGEXP";
+                    tag pattern: "[\\w][\\w.-]{0,127}", comparator: "REGEXP";
                 } 
+
             }
             steps {
                 echo "Crear y taguear imagen de Docker: ${IMAGE_FULL_NAME}"
-                echo "Subir imagen de Docker a Registry..."
+                script {
+                    withDockerRegistry([credentialsId: 'harbor-amilcar', url: "https://harbor.tallerdevops.com/"]) {
+                        // Crear y publicar la imagen de Docker
+                        def image = docker.build "${IMAGE_FULL_NAME}"
+                        image.push()
+                        
+                        // La misma imagen puede ser publicada bajo otro nombre también (ej. 'develop', o 'latest')
+                        if(IMAGE_TAG_ALT != null) [
+                            image.push(IMAGE_TAG_ALT)
+                        ]
+		            }
+	            }
             }
             post {
                 success {
                     // #0db7ed = Color insignia de Docker
-                    slackSend color: "#0db7ed", message: "Docker Image published:\t${IMAGE_FULL_NAME}"
+                    slackSend color: "#0db7ed", message: "Docker Image: \n```${IMAGE_FULL_NAME}```"
+                }
+                failure {
+                    slackSend color: "error", message: "Error con la imagen :\n${IMAGE_FULL_NAME}"
                 }
             }
         }

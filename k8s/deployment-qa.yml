@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-app-service
+spec:
+  type: ClusterIP
+  selector:
+    app: test-app
+  ports:
+    - protocol: TCP
+      port: 80
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-app-account
+  labels:
+    account: test-app-service
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-app-deployment
+  namespace: default
+  # annotations:
+  #   sidecar.istio.io/inject: "true"
+  labels:
+    app: test-app-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec:
+      serviceAccountName: test-app-account
+      containers:
+        - name: test-app
+          image: harbor.tallerdevops.com/tfm-grupo5/test-app:develop
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80

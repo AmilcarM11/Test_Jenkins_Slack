@@ -46,7 +46,8 @@ pipeline {
                     }
                     
                     // Definir el nombre completo de la imagen de Docker.
-                    IMAGE_FULL_NAME = "${DOCKER_REGISTRY}/${SERVICE_NAME}:${IMAGE_TAG}"
+                    IMAGE_NAME = "${SERVICE_NAME}:${IMAGE_TAG}"
+                    IMAGE_FULL_NAME = "${DOCKER_REGISTRY}/${IMAGE_NAME}"
                 }
 
                 // Notificar inicio de Pipeline, la rama, la imagen de Docker, y el commit message
@@ -101,14 +102,25 @@ pipeline {
             }
         }
         stage("Deploy QA") {
-            when { branch 'develop' }
+            // when { branch 'develop' }
+            when { branch 'feature/deploy-k8s' }
             steps {
-                slackSend message: "Branch ${env.BRANCH_NAME} deployed to <${env.QA_URL}|QA env>"
                 // TODO: Desplegar a QA
+                withKubeConfig([credentialsId: 'kube-config', serverUrl: "https://192.168.0.10:6443"]) {
+                    sh 'kubectl apply -f ./k8s/deployment-qa.yml'
+                }
+            }
+            post {
+                success {
+                    slackSend message: "Deployed image `${IMAGE_NAME}` <${env.QA_URL}|QA env>"
+                }
+                failure {
+                    slackSend color: "warning",  message: "Could not deploy image `${IMAGE_NAME}` <${env.QA_URL}|QA env>"
+                }
             }
         }
         stage("Deploy Prod") {
-            when { branch 'feature/test-manual-step' }
+            when { tag "" }
             options {
                 timeout(time: 3, unit: "MINUTES")
             }
